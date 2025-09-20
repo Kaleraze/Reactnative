@@ -1,27 +1,70 @@
-import React, {createContext, useState, useContext } from 'react';
-
-//สร้าง Context
-const AuthContext = createContext();
-
-//ส้ราง Provider
-export const AuthProvider = ({ children }) => {
+ import React, { createContext, useState, useContext, useEffect } from "react";
+ import { supabase } from "./config/supabase";
+ //./O> context
+ const AuthContext = createContext();
+ //./O> provider
+ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [password, setpassword] = useState(null);
-
-    //ส้ราง function สำหรับ login
-    const login = (email, password) => {
-        setUser( email );
-        setpassword( password );
-        console.log("context login =>", user, password);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        // //./ session ?/?/.? N
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setUser(session?.user ?? null);
+            setLoading(false);
+        });
+        // >/N /?. O / / auth state
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+            setLoading(false);
+        });
+        return () => subscription.unsubscribe();
+    }, []);
+    // N ? .O>//? Sign In
+    const signIn = async (email, password) => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+        return { data, error };
     };
-
+    // N ? .O>//? Sign Up
+    const signUp = async (email, password) => {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+        });
+        return { data, error };
+    };
+    // N ? .O>//? Sign Out
+    const signOut = async () => {
+        const { error } = await supabase.auth.signOut();
+        return { error };
+    };
+    // N ? .O>//? Reset Password
+    const resetPassword = async (email) => {
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+        return { data, error };
+    };
+    const value = {
+        user,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        resetPassword,
+    };
     return (
-        <AuthContext.Provider value={{ user, password, login }}>
-            {children}
-        </AuthContext.Provider>
-    );
-};
+            <AuthContext.Provider 
+                value={value}
+            >
+                {children}
+            </AuthContext.Provider>
 
-export const useAuth = () => {
+        
+    );
+ };
+ export const useAuth = () => {
     return useContext(AuthContext);
-};
+ };

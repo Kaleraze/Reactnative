@@ -2,7 +2,7 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 
 import { AuthProvider } from "./src/AuthContext";
-import AppNavigator from "./src/ืnavigation/AppNavigator";
+import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
   return (
